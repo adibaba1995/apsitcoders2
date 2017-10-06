@@ -31,11 +31,17 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
     Button location;
     @BindView(R.id.name)
     EditText name;
+    @BindView(R.id.add)
+    Button add;
 
     private Unbinder unbinder;
 
+    FirebaseDatabase firebaseDatabase;
     DatabaseReference ref;
+
     GeoFire geoFire;
+
+    private Place place;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,12 +50,14 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
         unbinder = ButterKnife.bind(this);
         initView();
 
-        ref = FirebaseDatabase.getInstance().getReference("stops");
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        ref = firebaseDatabase.getReference("stops");
         geoFire = new GeoFire(ref);
     }
 
     private void initView() {
         location.setOnClickListener(this);
+        add.setOnClickListener(this);
     }
 
     @Override
@@ -73,14 +81,16 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
                 }
 
                 break;
+            case R.id.add:
+                addLocation(place.getId(), place.getLatLng());
+                break;
         }
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
-                Place place = PlacePicker.getPlace(this, data);
-                addLocation(place.getId(), place.getLatLng());
+                place = PlacePicker.getPlace(this, data);
 //                name.setText(place.getId());
 //                String toastMsg = String.format("Place: %s", place.getName()) + String.format(" Location: %s", place.getLatLng().latitude + " " + place.getLatLng().longitude);
 //                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
@@ -93,6 +103,7 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void onComplete(String key, DatabaseError error) {
                 Toast.makeText(AddDataActivity.this, "Data added successfully", Toast.LENGTH_SHORT).show();
+                firebaseDatabase.getReference("stop-name").child(key).setValue(name.getText().toString());
             }
         });
     }
