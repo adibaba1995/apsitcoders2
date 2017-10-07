@@ -33,13 +33,17 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
     EditText name;
     @BindView(R.id.add)
     Button add;
+    @BindView(R.id.addBus)
+    Button addBus;
+    @BindView(R.id.bus_id)
+    EditText busId;
 
     private Unbinder unbinder;
 
     FirebaseDatabase firebaseDatabase;
     DatabaseReference ref;
 
-    GeoFire geoFire;
+    GeoFire addStopGeoFire, addBusGeoFire;
 
     private Place place;
 
@@ -52,12 +56,14 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         ref = firebaseDatabase.getReference("stops");
-        geoFire = new GeoFire(ref);
+        addStopGeoFire = new GeoFire(ref);
+        addBusGeoFire = new GeoFire(firebaseDatabase.getReference("buses"));
     }
 
     private void initView() {
         location.setOnClickListener(this);
         add.setOnClickListener(this);
+        addBus.setOnClickListener(this);
     }
 
     @Override
@@ -84,6 +90,9 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
             case R.id.add:
                 addLocation(place.getId(), place.getLatLng());
                 break;
+            case R.id.addBus:
+                addBus(busId.getText().toString(), place.getLatLng());
+                break;
         }
     }
 
@@ -98,8 +107,17 @@ public class AddDataActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+    private void addBus(String id, LatLng latLng) {
+        addBusGeoFire.setLocation(id, new GeoLocation(latLng.latitude, latLng.longitude), new GeoFire.CompletionListener() {
+            @Override
+            public void onComplete(String key, DatabaseError error) {
+                Toast.makeText(AddDataActivity.this, "Data added successfully", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void addLocation(String key, LatLng latLng) {
-        geoFire.setLocation(key, new GeoLocation(latLng.latitude, latLng.longitude), new GeoFire.CompletionListener() {
+        addStopGeoFire.setLocation(key, new GeoLocation(latLng.latitude, latLng.longitude), new GeoFire.CompletionListener() {
             @Override
             public void onComplete(String key, DatabaseError error) {
                 Toast.makeText(AddDataActivity.this, "Data added successfully", Toast.LENGTH_SHORT).show();
